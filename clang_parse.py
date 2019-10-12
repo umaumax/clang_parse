@@ -60,7 +60,6 @@ class ClangFuncRangeParser:
                     'VAR_DECL': re_snake,
                     'PARM_DECL': re_snake,
                     'DECL_REF_EXPR': re_snake,
-                    'UNEXPOSED_EXPR': re_snake,
                     'NAMESPACE': re_snake,
                     'TYPE_REF': None,
                     'CALL_EXPR': None,
@@ -68,6 +67,7 @@ class ClangFuncRangeParser:
                     'TEMPLATE_TYPE_PARAMETER': None,
                     'CONSTRUCTOR': None,
                     'DESTRUCTOR': None,
+                    'UNEXPOSED_EXPR': None,
                 }
 
                 name = node.displayname
