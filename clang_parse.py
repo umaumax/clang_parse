@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
+import sys
 import re
 import argparse
 
 from clang.cindex import Index
+from clang.cindex import Config
 
 from vprint import vprint
 
@@ -29,7 +31,7 @@ class ClangFuncRangeParser:
 
     def print_all(self):
         def _lambda(node, parent):
-            if (True or str(node.extent.start.file) == self.filepath):
+            if (str(node.extent.start.file) == self.filepath):
                 # print("file : %s" % node.extent.start.file)
                 # print("kind : %s" % node.kind.name)
                 # print("function : %s" % node.displayname)
@@ -46,35 +48,50 @@ class ClangFuncRangeParser:
                     'STRUCT_DECL': re_upper_camel,
                     'CLASS_DECL': re_upper_camel,
                     'FUNCTION_DECL': re_upper_camel,
+                    'FUNCTION_TEMPLATE': re_upper_camel,
                     'CXX_METHOD': re_upper_camel,
                     'FIELD_DECL': None,
                     'FIELD_DECL.CLASS_DECL': re_snake_end_with_underscore,
                     'FIELD_DECL.CLASS_TEMPLATE': re_snake_end_with_underscore,
+                    'MEMBER_REF_EXPR': re_snake_end_with_underscore,
+                    'MEMBER_REF': re_snake_end_with_underscore,
                     'FIELD_DECL.STRUCT_DECL': re_snake,
+                    'FIELD_DECL.UNION_DECL': re_snake,
                     'VAR_DECL': re_snake,
                     'PARM_DECL': re_snake,
+                    'TYPE_REF': re_snake,
+                    'DECL_REF_EXPR': re_snake,
+                    'UNEXPOSED_EXPR': re_snake,
+                    'NAMESPACE': re_snake,
+                    'CALL_EXPR': None,
+                    'TRANSLATION_UNIT': None,  # TODO: add filename check
+                    'TEMPLATE_TYPE_PARAMETER': None,
+                    'CONSTRUCTOR': None,
+                    'DESTRUCTOR': None,
                 }
 
                 name = node.displayname
-                if node.kind.name in google_coding_rule_name_def:
-                    name_re = google_coding_rule_name_def[node.kind.name]
-                    if node.kind.name == "FIELD_DECL":
-                        if parent is not None:
-                            key = node.kind.name + '.' + parent.kind.name
-                            if key in google_coding_rule_name_def:
-                                name_re = google_coding_rule_name_def[key]
-                            else:
-                                print("not supported pattern {}({})".format(name, key))
-                    if node.kind.name in ["CXX_METHOD", "FUNCTION_DECL"]:
-                        name = node.spelling
-                        # NOTE: for debug
-                        # vprint(node)
-                    if not name_re.fullmatch(name):
-                        print("{} wrong name : {}".format(node.kind.name, name))
-                else:
-                    if node.displayname:
-                        print("other display name: {}".format(node.kind.name))
-                        print("other display name: {}".format(node.displayname))
+                if name != "":
+                    if node.kind.name in google_coding_rule_name_def:
+                        name_re = google_coding_rule_name_def[node.kind.name]
+                        if name_re is not None:
+                            if node.kind.name == "FIELD_DECL":
+                                if parent is not None:
+                                    key = node.kind.name + '.' + parent.kind.name
+                                    if key in google_coding_rule_name_def:
+                                        name_re = google_coding_rule_name_def[key]
+                                    else:
+                                        print("not supported pattern {}({})".format(name, key))
+                            if node.kind.name in ["CXX_METHOD", "FUNCTION_DECL", "FUNCTION_TEMPLATE"]:
+                                name = node.spelling
+                                # NOTE: for debug
+                                # vprint(node)
+                            if not name_re.fullmatch(name):
+                                print("{} wrong name : {}".format(node.kind.name, name))
+                    else:
+                        if node.displayname:
+                            print("other display name: {}".format(node.kind.name))
+                            print("other display name: {}".format(node.displayname))
             return True
         self.traverse(_lambda)
 
@@ -94,6 +111,10 @@ class ClangFuncRangeParser:
 
 
 def main():
+    Config.set_compatibility_check(False)
+    # NOTE: for darwin
+    Config.set_library_path("/usr/local/opt/llvm/lib")
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--style', type=str, help='coding rule (only google is supported)')
     parser.add_argument('filepath')
