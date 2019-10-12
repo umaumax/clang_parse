@@ -53,7 +53,6 @@ class ClangFuncRangeParser:
                     'FIELD_DECL': None,
                     'FIELD_DECL.CLASS_DECL': re_snake_end_with_underscore,
                     'FIELD_DECL.CLASS_TEMPLATE': re_snake_end_with_underscore,
-                    'MEMBER_REF_EXPR': re_snake_end_with_underscore,
                     'MEMBER_REF': re_snake_end_with_underscore,
                     'FIELD_DECL.STRUCT_DECL': re_snake,
                     'FIELD_DECL.UNION_DECL': re_snake,
@@ -68,6 +67,7 @@ class ClangFuncRangeParser:
                     'CONSTRUCTOR': None,
                     'DESTRUCTOR': None,
                     'UNEXPOSED_EXPR': None,
+                    'MEMBER_REF_EXPR': None,
                 }
 
                 name = node.displayname
